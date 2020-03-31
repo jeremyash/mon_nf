@@ -131,12 +131,12 @@ write_csv(acidic_limed,
 
 # plot ANC points to get legend
 anc_plot <- ggplot() +
-  geom_point(aes(Longitude, Latitude, fill = anc_buf_fac), 
+  geom_point(aes(Longitude, Latitude, fill = anc_fac), 
              shape = 21,
              color = "grey15",
              size = 1.5, 
              data = spring_dat) +
-  scale_fill_manual(values = c("darkred", "tomato3", "darkolivegreen3", "darkgreen", "midnightblue"),
+  scale_fill_manual(values = c("darkred", "tomato3", "darkolivegreen3", "darkgreen"),
                     name = expression(bold(Acid~Neutralizing~Capacity~(mu*eq~L^-1))))  +
   theme_minimal() +
   theme(axis.title = element_blank(),
@@ -183,37 +183,37 @@ limed_plot <- ggplot() +
 
 limed_legend <- get_legend(limed_plot)
 
-plot_map <- ggplot() +
-  geom_sf(aes(fill = NULL), alpha = 0, color = "black", mon_sf) +
-  # geom_raster(data = relief_df, aes(x = x,
-  #                                   y = y,
-  #                                   alpha = relief)) +
-  # use the "alpha hack"
-  scale_alpha(name = "", range = c(0.6, 0), guide = F)  +
-  geom_sf(aes(fill = sens), color = NA, acid_sf) +
-  geom_sf(aes(fill = NULL), alpha = 0, color = "black", size = 1.5, mon_c1_sf) +
-  scale_fill_manual(values = alpha(c("red", "yellow", "green", "grey85"), 0.3),
-                    na.translate = FALSE,
-                    name = "Acid Sensitive Geology",
-                    guide = FALSE) +
-  new_scale_fill() +
-  geom_point(aes(Longitude, Latitude, fill = anc_buf_fac), 
-             shape = 21,
-             color = "grey15",
-             size = 2.3, 
-             data = spring_dat) +
-  scale_fill_manual(values = c("darkred", "tomato3", "darkolivegreen3", "darkgreen", "midnightblue"),
-                     name = expression(bold(Acid~Neutralizing~Capacity~(mu*eq~L^-1))),
-                    guide = FALSE)  +
-  theme_minimal() +
-  scale_x_continuous(limits = c(-80, -79.1)) +
-  scale_y_continuous(limits = c(38.8, 39.3)) +
-  theme(axis.title = element_blank(),
-        axis.text = element_blank(),
-        panel.grid.major = element_line(color = "white"),
-        legend.text  = element_text(size = 13),
-        legend.title = element_text(size = 13, face = "bold"),
-        plot.margin = margin(0,0,0,0)) 
+# plot_map <- ggplot() +
+#   geom_sf(aes(fill = NULL), alpha = 0, color = "black", mon_sf) +
+#   # geom_raster(data = relief_df, aes(x = x,
+#   #                                   y = y,
+#   #                                   alpha = relief)) +
+#   # use the "alpha hack"
+#   scale_alpha(name = "", range = c(0.6, 0), guide = F)  +
+#   geom_sf(aes(fill = sens), color = NA, acid_sf) +
+#   geom_sf(aes(fill = NULL), alpha = 0, color = "black", size = 1.5, mon_c1_sf) +
+#   scale_fill_manual(values = alpha(c("red", "yellow", "green", "grey85"), 0.3),
+#                     na.translate = FALSE,
+#                     name = "Acid Sensitive Geology",
+#                     guide = FALSE) +
+#   new_scale_fill() +
+#   geom_point(aes(Longitude, Latitude, fill = anc_buf_fac), 
+#              shape = 21,
+#              color = "grey15",
+#              size = 2.3, 
+#              data = spring_dat) +
+#   scale_fill_manual(values = c("darkred", "tomato3", "darkolivegreen3", "darkgreen", "midnightblue"),
+#                      name = expression(bold(Acid~Neutralizing~Capacity~(mu*eq~L^-1))),
+#                     guide = FALSE)  +
+#   theme_minimal() +
+#   scale_x_continuous(limits = c(-80, -79.1)) +
+#   scale_y_continuous(limits = c(38.8, 39.3)) +
+#   theme(axis.title = element_blank(),
+#         axis.text = element_blank(),
+#         panel.grid.major = element_line(color = "white"),
+#         legend.text  = element_text(size = 13),
+#         legend.title = element_text(size = 13, face = "bold"),
+#         plot.margin = margin(0,0,0,0)) 
 
 plot_map <- ggplot() +
   geom_sf(aes(fill = NULL), alpha = 0, color = "black", mon_sf) +
@@ -229,17 +229,17 @@ plot_map <- ggplot() +
                     name = "Acid Sensitive Geology",
                     guide = FALSE) +
   new_scale_fill() +
-  geom_point(aes(Longitude, Latitude, fill = anc_buf_fac, shape = limed),
+  geom_point(aes(Longitude, Latitude, fill = anc_fac, shape = limed),
    
              # shape = 21,
              color = "grey15",
-             size = 3, 
+             size = 3.5, 
              data = spring_dat) +
   scale_shape_manual(values = c(21, 24),
                      name = "Lime Addition",
                      labels = c("No", "Yes"),
                      guide = FALSE) +
-  scale_fill_manual(values = c("darkred", "tomato3", "darkolivegreen3", "darkgreen", "midnightblue"),
+  scale_fill_manual(values = c("darkred", "tomato3", "darkolivegreen3", "darkgreen"),
                     name = expression(bold(Acid~Neutralizing~Capacity~(mu*eq~L^-1))),
                     guide = FALSE)  +
   theme_minimal() +
@@ -252,6 +252,19 @@ plot_map <- ggplot() +
         legend.title = element_text(size = 13, face = "bold"),
         plot.margin = margin(0,0,0,0)) 
 
+
+bbox_df <- tibble(x = c(-80, -80, -79.1, -79.1, -80),
+                  y =  c(39.3, 38.8, 38.8, 39.3, 39.3))
+
+inset_map <- ggplot() +
+  geom_sf(fill = NA,  color = "black", data = mon_sf) +
+  geom_path(data=bbox_df, aes(x,y), color="red", lwd=1) + 
+  theme_void()
+
+
+plot_inset_map <- ggdraw() +
+  draw_plot(plot_map) +
+  draw_plot(inset_map, x = 0.65, y = 0.65, width = 0.3, height = 0.3)
 
 
 # create a blank plot for legend alignment 
@@ -277,7 +290,7 @@ leg12 <- plot_grid(blank_p,
 # )
 
 
-final_p <- plot_grid(plot_map,
+final_p <- plot_grid(plot_inset_map,
                      leg12,
                      nrow = 2,
                      align = "hv",
