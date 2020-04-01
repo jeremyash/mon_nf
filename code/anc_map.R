@@ -44,7 +44,22 @@ mon_c1 <- readOGR("../fs_admin/data/mon_c1")
 mon_c1 <- spTransform(mon_c1, crs_new)
 mon_c1_sf <- st_as_sf(mon_c1)
 
-# relief base map
+lime_wv <- readOGR("gis/WV_LimestoneSites_06162017") 
+lime_wv <- spTransform(lime_wv, crs_new)
+lime_wv <- lime_wv[lime_wv$Active == "active",]
+
+lime_mon <- over(lime_wv, mon) %>% 
+  bind_cols(., lime_wv@data) %>% 
+  filter(!(is.na(NAME))) %>% 
+  pull(OBJECTID1)
+
+lime_wv <- lime_wv[lime_wv$OBJECTID %in% lime_mon, ]
+
+lime_ctds <- as.data.frame(lime_wv@coords) 
+lime_ctds$limed <- rep("active", dim(lime_ctds)[1])
+colnames(lime_ctds)[1:2] <- c("lon", "lat")
+
+# relief map
 mon_relief <- readRDS("../appa_CL_model/GIS/mon_relief.RDS")
 
 # relief
@@ -125,6 +140,9 @@ acidic_limed <- water_dat %>%
 write_csv(acidic_limed,
           "data/acidified_limed_sites.csv")
 
+
+
+
 #----------------------------------------------------------------------------
 
 
@@ -135,7 +153,7 @@ anc_plot <- ggplot() +
              shape = 21,
              color = "grey15",
              size = 1.5, 
-             data = spring_dat) +
+             data = fall_dat) +
   scale_fill_manual(values = c("darkred", "tomato3", "darkolivegreen3", "darkgreen"),
                     name = expression(bold(Acid~Neutralizing~Capacity~(mu*eq~L^-1))))  +
   theme_minimal() +
@@ -164,15 +182,31 @@ sens_plot <- ggplot() +
 
 sens_legend <- get_legend(sens_plot)
 
+# limed_plot <- ggplot() +
+#   geom_point(aes(Longitude, Latitude, shape = limed), 
+#              # shape = 21,
+#              color = "grey15",
+#              size = 1.5, 
+#              data = spring_dat) +
+#   scale_shape_manual(values = c(21, 24),
+#                      name = "Lime Addition?",
+#                      labels = c("No", "Yes")) +
+#   theme_minimal() +
+#   theme(axis.title = element_blank(),
+#         axis.text = element_blank(),
+#         panel.grid.major = element_line(color = "white"),
+#         legend.text  = element_text(size = 13),
+#         legend.title = element_text(size = 13, face = "bold")) +
+#   guides(shape = guide_legend(override.aes = list(size = 4)))
+
 limed_plot <- ggplot() +
-  geom_point(aes(Longitude, Latitude, shape = limed), 
-             # shape = 21,
-             color = "grey15",
-             size = 1.5, 
-             data = spring_dat) +
-  scale_shape_manual(values = c(21, 24),
-                     name = "Lime Addition?",
-                     labels = c("No", "Yes")) +
+  geom_point(aes(lon, lat, shape = "limed"),
+             color = "midnightblue",
+             size = 1.5,
+             data = lime_ctds) +
+  scale_shape_manual(values = c(17),
+                     name = "Liming Site",
+                     labels = "") +
   theme_minimal() +
   theme(axis.title = element_blank(),
         axis.text = element_blank(),
@@ -180,6 +214,7 @@ limed_plot <- ggplot() +
         legend.text  = element_text(size = 13),
         legend.title = element_text(size = 13, face = "bold")) +
   guides(shape = guide_legend(override.aes = list(size = 4)))
+
 
 limed_legend <- get_legend(limed_plot)
 
@@ -229,15 +264,18 @@ plot_map <- ggplot() +
                     name = "Acid Sensitive Geology",
                     guide = FALSE) +
   new_scale_fill() +
-  geom_point(aes(Longitude, Latitude, fill = anc_fac, shape = limed),
+  geom_point(aes(Longitude, Latitude, fill = anc_fac),
    
-             # shape = 21,
+             shape = 21,
              color = "grey15",
              size = 3.5, 
-             data = spring_dat) +
-  scale_shape_manual(values = c(21, 24),
-                     name = "Lime Addition",
-                     labels = c("No", "Yes"),
+             data = fall_dat) +
+  geom_point(aes(lon, lat, shape = "limed"),
+             color = "midnightblue",
+             size = 3.5,
+             data = lime_ctds) +
+  scale_shape_manual(values = c(17),
+                     name = "Liming Site",
                      guide = FALSE) +
   scale_fill_manual(values = c("darkred", "tomato3", "darkolivegreen3", "darkgreen"),
                     name = expression(bold(Acid~Neutralizing~Capacity~(mu*eq~L^-1))),
@@ -299,35 +337,11 @@ final_p <- plot_grid(plot_inset_map,
                      rel_heights = c(4, 1)
 )
 
-save_plot(filename = "figures/anc_3yr_avg_map.pdf",
+save_plot(filename = "figures/anc_3yr_avg_map_fall.pdf",
           plot = final_p,
           nrow = 1,
           base_height = 8,
           base_width = 11)
-
-
-
-
-
-
-
-
-
-
-lay <- rbind(c(1,1,1,1),
-             c(1,1,1,1),
-             c(NA,2,3,NA))
-
-grid.arrange(plot_map, anc_legend, sens_legend, layout_matrix = lay)
-
-
-grid.arrange(plot_map, anc_legend, sens_legend, widths = 1:2, 
-             heights=unit(c(1,10), c("in", "mm")))
-
-
-ggsave(filename = "figures/anc_soil_sens_map.pdf",
-       height = 8,
-       width = 11, units = "in")
 
 
 
